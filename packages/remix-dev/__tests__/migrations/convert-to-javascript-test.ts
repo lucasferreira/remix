@@ -97,9 +97,7 @@ const checkMigrationRanSuccessfully = async (projectDir: string) => {
 
 const makeApp = () => {
   let projectDir = join(TEMP_DIR, "convert-to-javascript");
-
   copySync(FIXTURE, projectDir);
-
   return projectDir;
 };
 
@@ -110,8 +108,10 @@ const getRunArgs = (projectDir: string) => [
   projectDir,
   "--force",
 ];
+
 const runConvertToJavaScriptMigrationProgrammatically = (projectDir: string) =>
   run([...getRunArgs(projectDir), "--no-interactive"]);
+
 const runConvertToJavaScriptMigrationViaCLI = (projectDir: string) =>
   spawnSync(
     "node",

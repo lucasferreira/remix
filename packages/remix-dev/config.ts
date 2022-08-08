@@ -1,4 +1,5 @@
 import * as path from "path";
+import { pathToFileURL } from "url";
 import * as fse from "fs-extra";
 import getPort from "get-port";
 
@@ -292,9 +293,11 @@ export async function readConfig(
   let appConfig: AppConfig = {};
   if (configFile) {
     try {
-      let appConfigModule = await import(configFile);
+      let appConfigModule = await import(pathToFileURL(configFile).toString());
+      console.log(`debug: using ${configFile}`);
       appConfig = appConfigModule?.default || appConfig;
     } catch (error) {
+      console.error("debug: error reading config file", error);
       throw new Error(
         `Error loading Remix config at ${configFile}\n${String(error)}`
       );

@@ -293,10 +293,8 @@ export async function readConfig(
   let appConfig: AppConfig = {};
   if (configFile) {
     try {
-      // @ts-expect-error - rollup has problems with absolute file path imports and tries to be fancy and resolve them
-      // eslint-disable-next-line no-eval
-      let appConfigModule = await eval(import(configFile));
-      appConfig = appConfigModule?.default || appConfig;
+      let appConfigModule = await import(pathToFileURL(configFile).href);
+      appConfig = appConfigModule?.default || appConfigModule;
     } catch (error) {
       console.error("debug: error reading config file", error);
       throw new Error(

@@ -13,8 +13,8 @@ import shell from "shelljs";
 import stripAnsi from "strip-ansi";
 import type { PackageJson, TsConfigJson } from "type-fest";
 
-import { run } from "../../cli/run";
-import { readConfig } from "../../config";
+import { run } from "../../../../build/node_modules/@remix-run/dev/dist/cli/run";
+import { readConfig } from "../../../../build/node_modules/@remix-run/dev/dist/config";
 
 let output: string;
 const ORIGINAL_IO = {
@@ -39,29 +39,21 @@ const mockLog = (message: unknown = "", ...rest: unknown[]) => {
 };
 
 const FIXTURE = join(__dirname, "fixtures", "indie-stack");
-const TEMP_DIR = join(
-  realpathSync(tmpdir()),
-  `remix-tests-${Math.random().toString(32).slice(2)}`
-);
 
-beforeEach(() => {
-  output = "";
-  console.log = mockLog;
-  console.warn = mockLog;
-  console.error = mockLog;
+// beforeEach(() => {
+//   console.log = mockLog;
+//   console.warn = mockLog;
+//   console.error = mockLog;
+// });
 
-  removeSync(TEMP_DIR);
-  ensureDirSync(TEMP_DIR);
-});
-afterEach(() => {
-  console.log = ORIGINAL_IO.log;
-  console.warn = ORIGINAL_IO.warn;
-  console.error = ORIGINAL_IO.error;
-
-  removeSync(TEMP_DIR);
-});
+// afterEach(() => {
+//   console.log = ORIGINAL_IO.log;
+//   console.warn = ORIGINAL_IO.warn;
+//   console.error = ORIGINAL_IO.error;
+// });
 
 const checkMigrationRanSuccessfully = async (projectDir: string) => {
+  console.log(readConfig.toString());
   let config = await readConfig(projectDir);
 
   let jsConfigJson: TsConfigJson = readJSONSync(
@@ -96,7 +88,10 @@ const checkMigrationRanSuccessfully = async (projectDir: string) => {
 };
 
 const makeApp = () => {
-  let projectDir = join(TEMP_DIR, "convert-to-javascript");
+  let projectDir = join(
+    realpathSync(tmpdir()),
+    `remix-tests-${Math.random().toString(32).slice(2)}`
+  );
   copySync(FIXTURE, projectDir);
   return projectDir;
 };
@@ -116,18 +111,29 @@ const runConvertToJavaScriptMigrationViaCLI = (projectDir: string) =>
   spawnSync(
     "node",
     [
-      "--require",
-      require.resolve("esbuild-register"),
-      "--require",
-      join(__dirname, "..", "msw.ts"),
-      resolve(__dirname, "..", "..", "cli.ts"),
+      resolve(
+        process.cwd(),
+        "build",
+        "node_modules",
+        "@remix-run",
+        "dev",
+        "dist",
+        "cli.js"
+      ),
       ...getRunArgs(projectDir),
       "--interactive",
     ],
-    { cwd: projectDir }
+    {
+      cwd: projectDir,
+      // stdio: "inherit",
+    }
   ).stdout?.toString("utf-8");
 
 describe("`convert-to-javascript` migration", () => {
+  beforeEach(() => {
+    output = "";
+  });
+
   it("runs successfully when ran via CLI", async () => {
     let projectDir = makeApp();
 
@@ -137,6 +143,8 @@ describe("`convert-to-javascript` migration", () => {
 
     expect(output).toContain("✅ Your JavaScript looks good!");
     expect(output).toContain("successfully migrated");
+
+    removeSync(projectDir);
   });
 
   it("runs successfully when ran programmatically", async () => {
@@ -148,5 +156,7 @@ describe("`convert-to-javascript` migration", () => {
 
     expect(output).not.toContain("✅ Your JavaScript looks good!");
     expect(output).not.toContain("successfully migrated");
+
+    removeSync(projectDir);
   });
 });

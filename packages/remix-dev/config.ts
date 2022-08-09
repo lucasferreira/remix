@@ -293,8 +293,7 @@ export async function readConfig(
   let appConfig: AppConfig = {};
   if (configFile) {
     try {
-      let appConfigModule = await import(pathToFileURL(configFile).toString());
-      console.log(`debug: using ${configFile}`);
+      let appConfigModule = await eval(import(configFile));
       appConfig = appConfigModule?.default || appConfig;
     } catch (error) {
       console.error("debug: error reading config file", error);
